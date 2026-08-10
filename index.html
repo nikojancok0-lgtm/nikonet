@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b6e99">
+<link rel="manifest" href="manifest.json">
+<title>NIKONET</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6f8;color:#263238}
+header{background:linear-gradient(135deg,#075b7a,#0b8fbd);color:white;padding:22px 18px;border-radius:0 0 24px 24px}
+.brand{font-size:30px;font-weight:800;letter-spacing:1px}.sub{opacity:.9;margin-top:4px}
+.container{max-width:650px;margin:auto;padding:16px}
+.card{background:white;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 3px 15px #00000012}
+.status{display:flex;align-items:center;gap:12px}.dot{width:14px;height:14px;border-radius:50%;background:#18a957}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{width:100%;border:0;border-radius:14px;padding:16px;font-size:15px;font-weight:700;background:#0b79a5;color:white}
+button.secondary{background:#e9f2f6;color:#075b7a}button.danger{background:#d84343}
+input{width:100%;padding:14px;border:1px solid #ccd6db;border-radius:12px;font-size:16px;margin:7px 0 14px}
+label{font-size:13px;font-weight:700;color:#52646d}
+.row{display:flex;justify-content:space-between;align-items:center}.muted{color:#73838b;font-size:13px}
+#msg{white-space:pre-line}.warning{background:#fff5d9;border-left:4px solid #e5a900;padding:12px;border-radius:10px;font-size:13px}
+</style>
+</head>
+<body>
+<header><div class="container"><div class="brand">NIKONET</div><div class="sub">Kontrol Router Tenda N301</div></div></header>
+<main class="container">
+<div class="card">
+ <div class="status"><span class="dot"></span><div><b id="status">Siap</b><div class="muted" id="routerText">Router: 192.168.0.1</div></div></div>
+</div>
+
+<div class="card">
+<h3>Router</h3>
+<label>IP Router</label>
+<input id="ip" value="192.168.0.1" inputmode="decimal">
+<div class="grid">
+<button onclick="openAdmin()">Buka Admin</button>
+<button class="secondary" onclick="checkRouter()">Cek Router</button>
+</div>
+</div>
+
+<div class="card">
+<h3>Kontrol Cepat</h3>
+<div class="grid">
+<button onclick="openPath('/index.html')">📊 Status</button>
+<button onclick="openPath('/wireless_basic.html')">📶 WiFi</button>
+<button onclick="openPath('/bandwidth_control.html')">🚦 Bandwidth</button>
+<button onclick="openPath('/parental_control.html')">👨‍👩‍👧 Kontrol</button>
+<button onclick="openPath('/advanced.html')">⚙️ Advanced</button>
+<button onclick="openPath('/system.html')">🔄 Sistem</button>
+</div>
+</div>
+
+<div class="card">
+<h3>WiFi NIKONET</h3>
+<div class="warning">Tombol di bawah membuka halaman administrasi Tenda. URL menu dapat berbeda menurut firmware N301.</div>
+<br>
+<div class="grid">
+<button onclick="openAdmin()">Login Router</button>
+<button class="secondary" onclick="copyAddress()">Salin Alamat</button>
+</div>
+</div>
+
+<div class="card">
+<h3>Catatan</h3>
+<div id="msg" class="muted">Web App ini berjalan di browser. Browser biasanya tidak mengizinkan halaman web HTTPS mengirim perintah langsung ke router HTTP karena keamanan/CORS. Karena itu NIKONET membuka antarmuka admin router untuk kontrol yang aman dan kompatibel.</div>
+</div>
+</main>
+<script>
+const ipEl=document.getElementById('ip');
+const saved=localStorage.getItem('nikonet_ip'); if(saved) ipEl.value=saved;
+function base(){let ip=ipEl.value.trim()||'192.168.0.1';localStorage.setItem('nikonet_ip',ip);return 'http://'+ip}
+function openAdmin(){location.href=base()+'/login.html'}
+function openPath(p){location.href=base()+p}
+async function checkRouter(){
+ const ip=ipEl.value.trim()||'192.168.0.1'; localStorage.setItem('nikonet_ip',ip);
+ document.getElementById('status').textContent='Mengecek...';
+ try{await fetch(base()+'/',{mode:'no-cors',cache:'no-store'});document.getElementById('status').textContent='Router terdeteksi';}
+ catch(e){document.getElementById('status').textContent='Tidak dapat dicek dari browser';}
+ document.getElementById('routerText').textContent='Router: '+ip;
+}
+function copyAddress(){navigator.clipboard?.writeText(base());alert('Alamat router disalin: '+base())}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
