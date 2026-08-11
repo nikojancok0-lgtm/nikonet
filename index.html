@@ -2,18 +2,16 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#2563eb">
-<meta name="description" content="Aplikasi daftar harga SRC NAILA">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg">
+<link rel="manifest" href="./manifest.json">
 <title>SRC NAILA</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#0f172a}
 header{background:#2563eb;color:#fff;padding:24px 16px;border-radius:0 0 24px 24px}h1{margin:0;font-size:26px}.sub{margin-top:5px;opacity:.9}
 main{max-width:700px;margin:auto;padding:15px}.card{background:#fff;border-radius:16px;padding:15px;margin-bottom:14px;box-shadow:0 3px 12px #0001}
 input{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:11px;font-size:16px;margin-bottom:9px}
-button{border:0;border-radius:10px;padding:11px 14px;font-weight:bold}.primary{background:#2563eb;color:white;width:100%}
+button{border:0;border-radius:10px;padding:11px 14px;font-weight:bold;cursor:pointer}.primary{background:#2563eb;color:white;width:100%}
 .item{display:flex;justify-content:space-between;gap:10px;padding:14px 0;border-bottom:1px solid #e2e8f0}.item:last-child{border:0}
 .price{color:#2563eb;font-weight:bold;margin-top:4px}.actions{display:flex;gap:6px}.edit{background:#e2e8f0}.del{background:#fee2e2;color:#b91c1c}
 .empty{text-align:center;color:#64748b;padding:20px}.install{display:none;background:#16a34a;color:white;width:100%;margin-bottom:10px}
@@ -22,31 +20,54 @@ button{border:0;border-radius:10px;padding:11px 14px;font-weight:bold}.primary{b
 <body>
 <header><h1>🛒 SRC NAILA</h1><div class="sub">Daftar Harga & Stok Toko</div></header>
 <main>
-<button id="installBtn" class="install">📲 Pasang SRC NAILA ke Layar Utama</button>
-<div class="card"><input id="search" placeholder="🔎 Cari nama barang..." oninput="render()"></div>
+<button id="installBtn" class="install" type="button">📲 Pasang SRC NAILA ke Layar Utama</button>
+<div class="card"><input id="search" placeholder="🔎 Cari nama barang..." autocomplete="off"></div>
 <div class="card">
 <h3>Tambah Barang</h3>
-<input id="name" placeholder="Nama barang">
-<input id="price" type="number" inputmode="numeric" placeholder="Harga jual">
-<input id="stock" type="number" inputmode="numeric" placeholder="Stok (opsional)">
-<button class="primary" onclick="add()">＋ Tambah Barang</button>
+<form id="addForm">
+<input id="name" placeholder="Nama barang" required>
+<input id="price" type="number" inputmode="numeric" min="1" placeholder="Harga jual" required>
+<input id="stock" type="number" inputmode="numeric" min="0" value="0" placeholder="Stok">
+<button class="primary" type="submit">＋ Tambah Barang</button>
+</form>
 </div>
 <div class="card"><div style="display:flex;justify-content:space-between"><h3 style="margin:0">Daftar Barang</h3><span id="count"></span></div><div id="list"></div></div>
 </main>
 <script>
-const KEY='src_naila_data';
-let data=JSON.parse(localStorage.getItem(KEY)||'null')||[{name:'Larutan botol',price:7500,stock:0}];
-const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
-const rp=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n);
-function render(){let q=search.value.toLowerCase();let d=data.filter(x=>x.name.toLowerCase().includes(q));count.textContent=d.length+' barang';list.innerHTML=d.length?d.map((x)=>{let i=data.indexOf(x);return `<div class="item"><div><b>${esc(x.name)}</b><div class="price">${rp(x.price)}</div><small>Stok: ${x.stock??0}</small></div><div class="actions"><button class="edit" onclick="edit(${i})">Edit</button><button class="del" onclick="del(${i})">Hapus</button></div></div>`}).join(''):'<div class="empty">Barang tidak ditemukan.</div>'}
-function add(){let n=name.value.trim(),p=Number(price.value),s=Number(stock.value||0);if(!n||!p)return alert('Isi nama barang dan harga.');data.push({name:n,price:p,stock:s});save();name.value=price.value=stock.value='';render()}
-function edit(i){let n=prompt('Nama barang:',data[i].name);if(n===null)return;let p=prompt('Harga jual:',data[i].price);if(p===null)return;let s=prompt('Stok:',data[i].stock||0);if(s===null)return;if(!n.trim()||!Number(p))return alert('Data tidak valid.');data[i]={name:n.trim(),price:Number(p),stock:Number(s)||0};save();render()}
-function del(i){if(confirm('Hapus '+data[i].name+'?')){data.splice(i,1);save();render()}}
-function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])}
-render();
+'use strict';
+const KEY='src_naila_data_v2';
+let data;
+try{data=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){data=null}
+if(!Array.isArray(data))data=[{id:crypto.randomUUID?crypto.randomUUID():Date.now(),name:'Larutan botol',price:7500,stock:0}];
+
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function rp(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n)}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function render(){
+ const q=document.getElementById('search').value.toLowerCase().trim();
+ const found=data.filter(x=>x.name.toLowerCase().includes(q));
+ document.getElementById('count').textContent=found.length+' barang';
+ document.getElementById('list').innerHTML=found.length?found.map(x=>`
+ <div class="item"><div><b>${esc(x.name)}</b><div class="price">${rp(x.price)}</div><small>Stok: ${x.stock||0}</small></div>
+ <div class="actions"><button class="edit" type="button" data-edit="${x.id}">Edit</button><button class="del" type="button" data-del="${x.id}">Hapus</button></div></div>`).join(''):'<div class="empty">Barang tidak ditemukan.</div>';
+}
+document.getElementById('addForm').addEventListener('submit',function(e){
+ e.preventDefault();
+ const n=document.getElementById('name').value.trim(),p=Number(document.getElementById('price').value),s=Number(document.getElementById('stock').value||0);
+ if(!n||!Number.isFinite(p)||p<=0){alert('Nama dan harga wajib diisi.');return}
+ data.push({id:crypto.randomUUID?crypto.randomUUID():Date.now()+Math.random(),name:n,price:p,stock:Math.max(0,s)});
+ save();this.reset();document.getElementById('stock').value='0';render();alert('Barang berhasil ditambahkan.');
+});
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('list').addEventListener('click',e=>{
+ const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-del]');
+ if(edit){const x=data.find(v=>String(v.id)===edit.dataset.edit);if(!x)return;const n=prompt('Nama barang:',x.name);if(n===null)return;const p=prompt('Harga jual:',x.price);if(p===null)return;const s=prompt('Stok:',x.stock||0);if(s===null)return;if(!n.trim()||!Number(p)||Number(p)<=0)return alert('Data tidak valid.');x.name=n.trim();x.price=Number(p);x.stock=Math.max(0,Number(s)||0);save();render()}
+ if(del){const i=data.findIndex(v=>String(v.id)===del.dataset.del);if(i>=0&&confirm('Hapus '+data[i].name+'?')){data.splice(i,1);save();render()}}
+});
 let deferred;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;installBtn.style.display='block'});
-installBtn.onclick=async()=>{if(deferred){deferred.prompt();await deferred.userChoice;deferred=null;installBtn.style.display='none'}};
-if('serviceWorker'in navigator) navigator.serviceWorker.register('service-worker.js');
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;document.getElementById('installBtn').style.display='block'});
+document.getElementById('installBtn').addEventListener('click',async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById('installBtn').style.display='none'});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+render();
 </script>
 </body></html>
